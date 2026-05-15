@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: wampart
+
+  mongodb:
+    uri: mongodb://localhost:27017/wampart_db
+
+
+server:
+  port: 9020
+
+
+app:
+  security:
+    default-password: 12345678
+
+
+jwt:
+  secret: aQN7YkLcFz8R4B9ZPJtu0wuqPXprt5Z6AkPpljejB7W9xKmNvDqRsYhGcTbWpLuE
+  expiration: 86400000
+
+Cloudinary:
+  cloud_name: dvakviide
+  api_key: 663376465746955
+  api_secret: 5Cz_91UQXrF8Tkn1f-Mh8PA51iY
+
+
+logging:
+  level:
+    root: INFO
+    com:
+      wampart: DEBUG
+    org:
+      springframework:
+        data:
+          mongodb: DEBUG

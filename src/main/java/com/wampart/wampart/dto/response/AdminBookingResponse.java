@@ -1,0 +1,42 @@
+package com.wampart.wampart.dto.response;
+
+
+import com.wampart.wampart.enums.BookingStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class AdminBookingResponse {
+    private String id;
+    private String bookingReference;
+    private String userId;
+    private String carId;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime actualReturnDate;
+    private String pickUpLocation;
+    private String travelDestination;
+    private Integer numberOfDays;
+    private Double pricePerDay;
+    private Double discount;
+    private Double bookingCost;
+    private Integer extendedDays;
+    private Double extendedDaysCost;
+    private BookingStatus bookingStatus;
+    private String customerNote;
+    private String mileageStart;
+    private String mileageEnd;
+    private String adminNote;
+    private String approvedBy;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+}
