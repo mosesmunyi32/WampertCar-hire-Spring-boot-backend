@@ -2,8 +2,9 @@ spring:
   application:
     name: wampart
 
-  mongodb:
-    uri: mongodb+srv://moses:maish12345@cluster0.bxhna0e.mongodb.net/wampart_db?retryWrites=true&w=majority&appName=Cluster0
+  data:
+    mongodb:
+      uri: mongodb+srv://moses:maish12345@cluster0.bxhna0e.mongodb.net/wampart_db?retryWrites=true&w=majority&appName=Cluster0
 
 
 server:
@@ -34,5 +35,3 @@ logging:
       springframework:
         data:
           mongodb: DEBUG
-
-kind: Application
