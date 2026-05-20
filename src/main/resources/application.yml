@@ -3,7 +3,8 @@ spring:
     name: wampart
 
   mongodb:
-    uri: mongodb://localhost:27017/wampart_db
+    mongodb:
+      uri: mongodb+srv://moses:maish12345@cluster0.bxhna0e.mongodb.net/wampart_db?retryWrites=true&w=majority&appName=Cluster0
 
 
 server:
