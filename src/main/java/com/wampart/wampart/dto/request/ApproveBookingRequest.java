@@ -18,7 +18,7 @@ public class ApproveBookingRequest {
     @NotNull(message = "Booking status is required")
     private BookingStatus bookingStatus;
 
-    @NotNull(message = "Please provide an extension note")
+
     private String adminNote;
 
 }
