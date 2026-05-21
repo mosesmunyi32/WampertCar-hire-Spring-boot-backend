@@ -11,48 +11,41 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
 
-        // ✅ Use origin patterns (fixes Vercel preview + production issues)
-        configuration.setAllowedOriginPatterns(
-                List.of(
-                        "http://localhost:3000",
-                        "https://warmper-car-hire-front-end.vercel.app",
-                        "https://*.vercel.app"
-                )
-        );
+            CorsConfiguration configuration = new CorsConfiguration();
 
-        // ✅ Allowed HTTP methods
-        configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-        );
+            configuration.setAllowedOriginPatterns(List.of(
+                    "http://localhost:3000",
+                    "https://warmper-car-hire-front-end.vercel.app",
+                    "https://*.vercel.app"
+            ));
 
-        // ✅ Headers allowed from frontend
-        configuration.setAllowedHeaders(
-                List.of(
-                        "Authorization",
-                        "Content-Type",
-                        "X-Requested-With",
-                        "Accept",
-                        "Origin",
-                        "Access-Control-Request-Method",
-                        "Access-Control-Request-Headers",
-                        "Access-Control-Allow-Origin"
-                )
-        );
+            configuration.setAllowedMethods(List.of(
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                    "OPTIONS"
+            ));
 
+            configuration.setAllowedHeaders(List.of("*"));
 
-        configuration.setAllowCredentials(true);
+            configuration.setExposedHeaders(List.of("Authorization"));
 
+            configuration.setAllowCredentials(true);
 
-        configuration.setMaxAge(3600L);
+            configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+            UrlBasedCorsConfigurationSource source =
+                    new UrlBasedCorsConfigurationSource();
 
-        return source;
-    }
+            source.registerCorsConfiguration("/**", configuration);
+
+            return source;
+        }
+
 }
