@@ -18,6 +18,11 @@ public interface BookingRepository extends MongoRepository<BookingEntity, String
     List<BookingEntity> findByBookingStatus(BookingStatus bookingStatus);
     List<BookingEntity> findByCarId(String carId);
 
+    @Query("""
+{'carId': ?0,'bookingStatus': {$in: ['PENDING', 'CONFIRMED'] }}
+""")
+    List<BookingEntity> findActiveBookingsDatesByCar(String carId);
+
 
     //Check for Overlapping Bookings
     @Query("""

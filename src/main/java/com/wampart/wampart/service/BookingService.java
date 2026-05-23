@@ -3,6 +3,7 @@ package com.wampart.wampart.service;
 
 import com.wampart.wampart.dto.request.*;
 import com.wampart.wampart.dto.response.AdminBookingResponse;
+import com.wampart.wampart.dto.response.BookedDatesResponse;
 import com.wampart.wampart.dto.response.CustomerBookingResponse;
 import com.wampart.wampart.enums.BookingStatus;
 import com.wampart.wampart.exception.ResourceNotFoundException;
@@ -249,8 +250,29 @@ public class BookingService {
     }
 
 
+    //get booked dates
 
-    //getBooking by id
+
+
+    public List<BookedDatesResponse> getBookedDatesForCar(String carId) {
+
+        return bookingRepository.findActiveBookingsDatesByCar(carId)
+                .stream()
+                .map(b -> BookedDatesResponse.builder()
+                        .startDate(b.getStartDate())
+                        .endDate(b.getEndDate())
+                        .build())
+                .collect(Collectors.toList());
+
+    }
+
+
+
+
+
+
+
+//getBooking by id
 
     public AdminBookingResponse getBookingByIdForAdmin(String id) {
         BookingEntity booking = bookingRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Booking not found"));
@@ -307,6 +329,23 @@ public class BookingService {
                 .build();
 
         BookingEntity savedBooking = bookingRepository.save(booking);
+
+        try {
+            String receiptUrl = pdfService.generateAndStoreBookingReceipt(savedBooking, customer, car);
+            whatsAppService.notifyCustomerBookingConfirmed(
+                    customer.getPhoneNumber(),
+                    customer.getFirstName() + " " + customer.getLastName(),
+                    savedBooking.getBookingReference(),
+                    car.getBrand() + " " + car.getModel(),
+                    savedBooking.getStartDate().toString(),
+                    savedBooking.getEndDate().toString(),
+                    savedBooking.getBookingCost(),
+                    receiptUrl
+            );
+        } catch (Exception e) {
+            log.warn("Failed to generate receipt or send WhatsApp: {}", e.getMessage());
+        }
+
         return mapToAdminBookingResponse(savedBooking);
 
 

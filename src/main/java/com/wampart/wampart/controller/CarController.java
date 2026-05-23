@@ -3,8 +3,10 @@ package com.wampart.wampart.controller;
 
 import com.wampart.wampart.dto.request.CarRequest;
 import com.wampart.wampart.dto.response.AdminCarResponse;
+import com.wampart.wampart.dto.response.BookedDatesResponse;
 import com.wampart.wampart.dto.response.CustomerCarResponse;
 import com.wampart.wampart.dto.response.ToggleAvailabilityResponse;
+import com.wampart.wampart.service.BookingService;
 import com.wampart.wampart.service.CarService;
 import com.wampart.wampart.service.ToggleAvailabilityService;
 import jakarta.validation.Valid;
@@ -21,6 +23,7 @@ import java.util.List;
 public class CarController {
     private final CarService carService;
     private final ToggleAvailabilityService toggleAvailabilityService;
+    private final BookingService bookingService;
 
     @PostMapping("/admin/addcars")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
@@ -58,6 +61,11 @@ public class CarController {
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<CustomerCarResponse> getCarByIdForCustomer(@PathVariable String id ) {
         return ResponseEntity.ok(carService.getCarByIdForCustomer(id));
+    }
+
+    @GetMapping("/cars/{carId}/booked-dates")
+    public ResponseEntity<List<BookedDatesResponse>> getBookedDatesForCar(@PathVariable String carId) {
+        return ResponseEntity.ok(bookingService.getBookedDatesForCar(carId));
     }
 
 //    @PutMapping("/cars/admin/{id}")

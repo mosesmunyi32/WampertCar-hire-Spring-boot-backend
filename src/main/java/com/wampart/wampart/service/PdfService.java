@@ -35,19 +35,26 @@ public class PdfService {
             // Step 1 - Generate PDF bytes
             byte[] pdfBytes = generateBookingReceipt(booking, customer, car);
 
-            // Step 2 - Upload to Cloudinary
-            Map uploadResult = cloudinary.uploader().upload(
+            // Step 2 - Upload to Cloudinary as "authenticated" so only signed URLs work
+            String publicId = "wampart/receipts/receipt-"
+                    + booking.getBookingReference() + ".pdf";
+
+            cloudinary.uploader().upload(
                     pdfBytes,
                     ObjectUtils.asMap(
-                            "folder", "wampart/receipts",
                             "resource_type", "raw",
-                            "public_id", "receipt-" + booking.getBookingReference(),
-                            "format", "pdf"
+                            "public_id", publicId,
+                            "type", "authenticated",
+                            "overwrite", true
                     )
             );
 
-            // Step 3 - Get URL from Cloudinary
-            String receiptUrl = uploadResult.get("secure_url").toString();
+            // Step 3 - Generate a permanent signed URL (signature embedded in link)
+            String receiptUrl = cloudinary.url()
+                    .resourceType("raw")
+                    .type("authenticated")
+                    .signed(true)
+                    .generate(publicId);
 
             // Step 4 - Save URL to booking
             booking.setReceiptUrl(receiptUrl);

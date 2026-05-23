@@ -20,7 +20,7 @@ public class WhatsAppService {
     public void sendWhatsAppMessage(String toPhoneNumber, String message) {
         try {
             Message.creator(
-                    new PhoneNumber("whatsapp: " + toPhoneNumber ),
+                    new PhoneNumber("whatsapp:" + toPhoneNumber),
                     new PhoneNumber(twilioConfig.getWhatsappNumber()),
                     message
             ).create();

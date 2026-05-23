@@ -126,10 +126,9 @@ public class AuthService {
         try {
             whatsAppService.notifyAdminNewUser(
                     savedUser.getFirstName(),
-                    savedUser.getLastName(),
+                    savedUser.getPhoneNumber(),
                     savedUser.getEmail(),
-                    savedUser.getPhoneNumber()
-
+                    savedUser.getLastName()
             );
         } catch (Exception e) {
             log.warn("failed to send whatsapp notification: {}", e.getMessage() );
