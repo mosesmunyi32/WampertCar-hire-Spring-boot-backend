@@ -46,6 +46,7 @@ public class BookingEntity {
     private String approvedBy;
     private String mileageStart;
     private String mileageEnd;
+    private String receiptUrl;
     @CreatedDate
     private LocalDateTime createdAt;
     @LastModifiedDate

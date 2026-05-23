@@ -13,6 +13,7 @@ import com.wampart.wampart.repositoty.BookingRepository;
 import com.wampart.wampart.repositoty.CarRepository;
 import com.wampart.wampart.repositoty.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -24,12 +25,17 @@ import java.util.List;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final CarRepository carRepository;
     private final UserRepository userRepository;
+    private final WhatsAppService whatsAppService;
+    private final PdfService pdfService;
+
+
 
 
     //===============================Helper Methods===============/
@@ -106,6 +112,26 @@ public class BookingService {
                 .customerNote(request.getCustomerNote())
                 .build();
         BookingEntity savedBooking = bookingRepository.save(booking);
+
+        try {
+            whatsAppService.notifyAdminNewBooking(
+                    savedBooking.getBookingReference(),
+                    customer.getFirstName() + " " + customer.getLastName(),
+                    car.getBrand() + " " + car.getModel(),
+                    savedBooking.getStartDate().toString(),
+                    savedBooking.getEndDate().toString(),
+                    savedBooking.getBookingCost()
+            ) ;
+            } catch (Exception e) {
+            log.warn("Failed to send whatsapp notification {}", e.getMessage());
+
+        }
+
+
+
+
+
+
         return mapToCustomerBookingResponse(savedBooking);
 
     }
@@ -302,9 +328,47 @@ public class BookingService {
         booking.setAdminNote(request.getAdminNote());
         booking.setApprovedBy(admin.getId());
 
-       BookingEntity updateBooking =  bookingRepository.save(booking);
+       BookingEntity updatedBooking =  bookingRepository.save(booking);
 
-       return mapToAdminBookingResponse(updateBooking);
+        if (request.getBookingStatus() == BookingStatus.CONFIRMED) {
+
+            // Find customer
+            UserEntity customer = userRepository
+                    .findById(updatedBooking.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Customer not found"));
+
+            // Find car
+            CarEntity car = carRepository
+                    .findById(updatedBooking.getCarId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Car not found"));
+
+            // Generate and store receipt
+            try {
+                String receiptUrl = pdfService
+                        .generateAndStoreBookingReceipt(
+                                updatedBooking, customer, car);
+
+                // Notify customer via WhatsApp
+                whatsAppService.notifyCustomerBookingConfirmed(
+                        customer.getPhoneNumber(),
+                        customer.getFirstName() + " " + customer.getLastName(),
+                        updatedBooking.getBookingReference(),
+                        car.getBrand() + " " + car.getModel(),
+                        updatedBooking.getStartDate().toString(),
+                        updatedBooking.getEndDate().toString(),
+                        updatedBooking.getBookingCost(),
+                        receiptUrl
+                );
+            } catch (Exception e) {
+                log.warn("Failed to generate receipt or send WhatsApp: {}",
+                        e.getMessage());
+            }
+        }
+
+
+        return mapToAdminBookingResponse(updatedBooking);
 
     }
 

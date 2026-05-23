@@ -17,6 +17,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -60,8 +61,10 @@ public class UserEntity implements UserDetails {
     private Role role;
     private Boolean isVerified;
     private Boolean isActive;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
+    private String resetOtp;
+    private LocalDateTime otpExpiryTime;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

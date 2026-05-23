@@ -13,6 +13,7 @@ import com.wampart.wampart.exception.ResourceNotFoundException;
 import com.wampart.wampart.model.UserEntity;
 import com.wampart.wampart.repositoty.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,11 +22,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final WhatsAppService whatsAppService;
 
 
 
@@ -89,6 +92,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
 
+
         if(userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("email already exist");
         }
@@ -116,6 +120,27 @@ public class AuthService {
         UserEntity savedUser = userRepository.save(userEntity);
 
         String token = jwtService.generateToken(savedUser);
+
+
+
+        try {
+            whatsAppService.notifyAdminNewUser(
+                    savedUser.getFirstName(),
+                    savedUser.getLastName(),
+                    savedUser.getEmail(),
+                    savedUser.getPhoneNumber()
+
+            );
+        } catch (Exception e) {
+            log.warn("failed to send whatsapp notification: {}", e.getMessage() );
+        }
+
+
+
+
+
+
+
 
         return AuthResponse.builder()
                 .token(token)

@@ -5,7 +5,8 @@
       "Bash(git -C \"C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart\" diff)",
       "Bash(git -C \"C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart\" add src/main/resources/application.yml)",
       "Bash(git -C 'C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart' commit -m ' *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(nslookup *)"
     ]
   }
 }
