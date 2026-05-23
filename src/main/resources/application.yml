@@ -3,7 +3,7 @@ spring:
     name: wampart
 
   mongodb:
-    uri: ${MONGODB_URI}
+    uri: ${WARMPERT_MONGODB_URI}
 
 
 server:
