@@ -4,14 +4,19 @@ package com.wampart.wampart.service;
 import com.wampart.wampart.dto.request.*;
 import com.wampart.wampart.dto.response.AdminBookingResponse;
 import com.wampart.wampart.dto.response.BookedDatesResponse;
+import com.wampart.wampart.dto.response.BookingHistoryResponse;
 import com.wampart.wampart.dto.response.CustomerBookingResponse;
 import com.wampart.wampart.enums.BookingStatus;
+import com.wampart.wampart.enums.InspectionType;
+import com.wampart.wampart.exception.BadRequestException;
 import com.wampart.wampart.exception.ResourceNotFoundException;
 import com.wampart.wampart.model.BookingEntity;
 import com.wampart.wampart.model.CarEntity;
+import com.wampart.wampart.model.InspectionEntity;
 import com.wampart.wampart.model.UserEntity;
 import com.wampart.wampart.repositoty.BookingRepository;
 import com.wampart.wampart.repositoty.CarRepository;
+import com.wampart.wampart.repositoty.InspectionRepository;
 import com.wampart.wampart.repositoty.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,6 +41,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final WhatsAppService whatsAppService;
     private final PdfService pdfService;
+    private final InspectionRepository inspectionRepository;
 
 
 
@@ -441,6 +448,105 @@ public class BookingService {
 
 
 
+    //=========================Booking History Methods =======================================
+    public List<BookingHistoryResponse> getBookingHistoryByCar(String carId) {
+        CarEntity car = carRepository.findById(carId).orElseThrow(()-> new ResourceNotFoundException("Car not found"));
+        return bookingRepository.findByCarId(carId)
+                .stream()
+                .map(booking -> mapToBookingHistoryResponse(booking, car, null))
+                .collect(Collectors.toList());
+    }
 
+    public List<BookingHistoryResponse> getBookingHistoryByUser(String userId) {
+        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user not found"));
+
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(booking ->{
+                    CarEntity car = carRepository.findById(booking.getCarId()).orElse(null);
+                    return mapToBookingHistoryResponse(booking, car, user);
+                } )
+                .collect(Collectors.toList());
+    }
+
+
+    // users getting their own booking histories
+    public List<BookingHistoryResponse> getMyBookingHistory() {
+        UserEntity customer = getCurrentUser();
+        return bookingRepository.findByUserId(customer.getId())
+                .stream()
+                .map(booking -> {
+                    CarEntity car = carRepository.findById(booking.getCarId()).orElse(null);
+                    return mapToBookingHistoryResponse(booking, car, customer);
+                } )
+                .collect(Collectors.toList());
+    }
+
+
+    public AdminBookingResponse reassignBooking(String id, ReassignBookingRequest request) {
+        BookingEntity booking = bookingRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Booking not found"));
+
+        if(booking.getBookingStatus() != BookingStatus.PENDING && booking.getBookingStatus() != BookingStatus.CONFIRMED ) {
+            throw new BadRequestException("Booking cannot be reassigned at this stage");
+        }
+
+        CarEntity newCar = carRepository.findByNumberPlate(request.getNewCarNumberPlate()).orElseThrow(()-> new ResourceNotFoundException("Car not found with number plate: " + request.getNewCarNumberPlate()));
+
+        if(!newCar.getIsAvailable()) {
+            throw new BadRequestException("Car is not available for booking");
+        }
+
+        if(!isCarAvailableForDates(newCar.getId(), booking.getStartDate(), booking.getEndDate() )) {
+            throw new BadRequestException("Car is not available for the requested dates");
+        }
+
+        double newBookingCost = booking.getNumberOfDays() * newCar.getPricePerDay();
+
+        booking.setCarId(newCar.getId());
+        booking.setPricePerDay(newCar.getPricePerDay());
+        booking.setBookingCost(newBookingCost);
+        booking.setAdminNote(request.getAdminNote());
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        BookingEntity updatedBooking = bookingRepository.save(booking);
+        return mapToAdminBookingResponse(updatedBooking);
+
+    }
+
+
+
+    private BookingHistoryResponse mapToBookingHistoryResponse(BookingEntity booking, CarEntity car, UserEntity user) {
+        List<InspectionEntity> inspections = inspectionRepository.findByBookingId(booking.getId());
+        Optional<InspectionEntity> postInspection = inspections.stream()
+                .filter(i -> i.getInspectionType() == InspectionType.POST_INSPECTION )
+                .findFirst();
+
+        UserEntity customer = user;
+        if(customer == null) {
+            customer = userRepository.findById(booking.getUserId()).orElse(null);
+        }
+
+        return BookingHistoryResponse.builder()
+                .bookingReference(booking.getBookingReference())
+                .startDate(booking.getStartDate())
+                .endDate(booking.getEndDate())
+                .bookingStatus(booking.getBookingStatus())
+                .numberOfDays(booking.getNumberOfDays())
+                .bookingCost(booking.getBookingCost())
+                .carBrand(car !=null ? car.getBrand() : null )
+                .carModel(car != null ? car.getModel() : null )
+                .carYear(car != null ? car.getYearOfManufacture() : null )
+                .numberPlate(car != null ? car.getNumberPlate() : null )
+                .customerFirstName( customer !=null ? customer.getFirstName() : null )
+                .customerLastName(customer != null ? customer.getLastName() : null )
+                .customerEmail(customer != null ? customer.getEmail(): null)
+                .customerPhoneNumber(customer !=null ? customer.getPhoneNumber(): null)
+                .inspectionComment(postInspection.map(InspectionEntity :: getInspectionComment ).orElse(null))
+                .carWasDamaged((postInspection.map(InspectionEntity::getIsDamaged)).orElse(null))
+                .createdAt(booking.getCreatedAt())
+                .build();
+
+
+    }
 
 }

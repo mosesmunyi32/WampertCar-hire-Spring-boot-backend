@@ -20,6 +20,7 @@ public interface UserRepository extends MongoRepository<UserEntity, String> {
     List<UserEntity> findByRole(Role role);
     Boolean existsByEmail(String email);
     Boolean existsByIdNumber(String IdNumber);
+    Optional<UserEntity> findByEmailOrIdNumber(String email, String IdNumber);
 
 
 }

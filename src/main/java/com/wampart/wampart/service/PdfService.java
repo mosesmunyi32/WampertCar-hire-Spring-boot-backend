@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Service
@@ -78,6 +79,8 @@ public class PdfService {
             BookingEntity booking,
             UserEntity customer,
             CarEntity car) {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MM yyyy 'at' HH:mm");
 
         try {
             Document document = new Document(PageSize.A4);
@@ -152,9 +155,9 @@ public class PdfService {
             // ===== BOOKING DETAILS =====
             document.add(new Paragraph("BOOKING DETAILS", headerFont));
             document.add(new Paragraph(
-                    "Start Date: " + booking.getStartDate(), normalFont));
+                    "Start Date: " + booking.getStartDate().format(formatter), normalFont));
             document.add(new Paragraph(
-                    "End Date: " + booking.getEndDate(), normalFont));
+                    "End Date: " + booking.getEndDate().format(formatter), normalFont));
             document.add(new Paragraph(
                     "Pick Up Location: " + booking.getPickUpLocation(),
                     normalFont));

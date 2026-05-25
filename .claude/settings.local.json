@@ -6,7 +6,9 @@
       "Bash(git -C \"C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart\" add src/main/resources/application.yml)",
       "Bash(git -C 'C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart' commit -m ' *)",
       "Bash(git *)",
-      "Bash(nslookup *)"
+      "Bash(nslookup *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart\" -Recurse -Directory)",
+      "PowerShell(head *)"
     ]
   }
 }

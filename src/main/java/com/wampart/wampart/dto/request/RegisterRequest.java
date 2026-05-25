@@ -37,7 +37,7 @@ public class RegisterRequest {
     @NotNull(message ="Date of birth is required" )
     private LocalDate dateOfBirth;
 
-    @NotNull(message = "Gender is required")
+
     private Gender gender;
 
     private String county;

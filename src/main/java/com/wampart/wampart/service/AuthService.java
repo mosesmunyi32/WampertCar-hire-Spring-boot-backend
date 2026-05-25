@@ -178,15 +178,16 @@ public class AuthService {
 
 
     public AuthResponse login(LoginRequest request) {
+        String identifier = request.getEmail() !=null ? request.getEmail() : request.getIdNumber();
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
+                        identifier,
                         request.getPassword()
                 )
         );
 
-        UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("password or email is incorrect"));
+        UserEntity user = userRepository.findByEmailOrIdNumber(request.getEmail(), request.getIdNumber())
+                .orElseThrow(() -> new RuntimeException("invalid credentials"));
 
         String token = jwtService.generateToken(user);
 

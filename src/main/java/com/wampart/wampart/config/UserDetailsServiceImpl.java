@@ -20,8 +20,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user not found with email: "+ email));
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+
+        UserEntity user;
+
+        if(identifier.contains("@")) {
+            user = userRepository.findByEmail(identifier).orElseThrow(() -> new UsernameNotFoundException("user not found with email: "+ identifier));
+        } else {
+            user = userRepository.findByIdNumber(identifier).orElseThrow(() -> new UsernameNotFoundException("user not found with id: "+ identifier));
+        }
 
         if(!user.getIsActive()) {
             throw new RuntimeException("user account is deactivated. please contact support");

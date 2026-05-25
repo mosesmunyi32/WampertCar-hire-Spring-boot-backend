@@ -12,13 +12,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class ResetPassworRequest {
+public class ResetPasswordRequest {
 
-    private String PhoneNumber;
+    private String phoneNumber;
     private String email;
 
     @NotBlank(message = "OTP is required")
-    private String Otp;
+    private String otp;
 
 
     @NotBlank(message = "New password is required")

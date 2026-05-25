@@ -2,7 +2,7 @@ package com.wampart.wampart.service;
 
 
 import com.wampart.wampart.dto.request.ForgotPasswordRequest;
-import com.wampart.wampart.dto.request.ResetPassworRequest;
+import com.wampart.wampart.dto.request.ResetPasswordRequest;
 import com.wampart.wampart.exception.ResourceNotFoundException;
 import com.wampart.wampart.model.UserEntity;
 import com.wampart.wampart.repositoty.UserRepository;
@@ -21,10 +21,12 @@ public class ForgotPasswordService {
     private final UserRepository userRepository;
     private final WhatsAppService whatsAppService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
 
     //==========Helper Methods ==========//
     private UserEntity findUser(ForgotPasswordRequest request) {
+
         if(request.getPhoneNumber() != null ) {
             return userRepository.findByPhoneNumber(request.getPhoneNumber()).orElseThrow(()-> new ResourceNotFoundException("User not found with phone number: " + request.getPhoneNumber()));
 
@@ -33,13 +35,16 @@ public class ForgotPasswordService {
         }
     }
 
-    private UserEntity findUserForReset(ResetPassworRequest request) {
+    private UserEntity findUserForReset(ResetPasswordRequest request) {
+
         if(request.getPhoneNumber() != null ) {
             return userRepository.findByPhoneNumber(request.getPhoneNumber()).orElseThrow(()-> new ResourceNotFoundException("User not found with phone number: " + request.getPhoneNumber()));
 
         } else {
             return userRepository.findByEmail(request.getEmail()).orElseThrow(()-> new ResourceNotFoundException("User not found with email: " + request.getEmail()));
         }
+
+
     }
 
     private String generateOtp() {
@@ -58,41 +63,40 @@ public class ForgotPasswordService {
 
 
 
-
-
-
-
-    //============Send OTP ==================//
    public String sendOtp(ForgotPasswordRequest request) {
-       if(request.getPhoneNumber() == null && request.getEmail() == null ) {
+
+        if(request.getPhoneNumber() == null && request.getEmail() == null ) {
            throw new RuntimeException("Please provide either email or phone number");
        }
 
        UserEntity user = findUser(request);
-
        String otp  = generateOtp();
-
        LocalDateTime otpExpiryTime = LocalDateTime.now().plusMinutes(10);
-
-
        user.setResetOtp(otp);
        user.setOtpExpiryTime(otpExpiryTime);
        userRepository.save(user);
 
-       //send through whatsapp
-       String message = buildOtpMessage(user.getFirstName(), otp);
-       whatsAppService.sendWhatsAppMessage(user.getPhoneNumber(), message);
+        if(user.getPhoneNumber() != null) {
+            String modifiedPhoneNumber = user.getPhoneNumber().replaceFirst("^0", "+254");
+            whatsAppService.sendWhatsAppMessage(modifiedPhoneNumber, "Hello " + user.getFirstName() + ",\n\n" +
+                    "Your OTP for password reset is: " + otp + "\n\n" +
+                    "This OTP is valid for 10 minutes.\n\n" +
+                    "Thank you,\n" +
+                    "WAMP Team");
+        } else {
+            emailService.sendEmail(user.getEmail(), user.getFirstName(), otp);
+            log.info("Email sent successfully to: " + user.getEmail());
+        }
 
-       log.info("OTP sent successfully to: " + user.getPhoneNumber());
-       return "OTP sent successfully to your whats app number";
 
 
+       return "OTP sent successfully";
    }
 
 
    //========Reset Password  ===============
 
-    public String resetPassword(ResetPassworRequest request) {
+    public String resetPassword(ResetPasswordRequest request) {
         if(request.getPhoneNumber() == null && request.getEmail() == null ) {
             throw new RuntimeException("Please provide either email or phone number");
         }

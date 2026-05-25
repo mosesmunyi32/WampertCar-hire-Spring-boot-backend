@@ -6,8 +6,19 @@ spring:
     uri: ${WARMPERT_MONGODB_URI}
 
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+
+
 server:
-  port: ${PORT:9020}
+  port: 9020
 
 
 app:
@@ -42,4 +53,6 @@ twilio:
   account-sid: ${TWILIO_ACCOUNT_SID}
   auth-token: ${TWILIO_AUTH_TOKEN}
   whatsapp-number: +14155238886
-  admin-whatsapp-number: "25470750362"
+  admin-whatsapp-number: "+25470750362"
+
+

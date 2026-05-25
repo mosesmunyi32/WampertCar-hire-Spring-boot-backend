@@ -2,6 +2,7 @@ package com.wampart.wampart.dto.response;
 
 
 import com.wampart.wampart.enums.CarCondition;
+import com.wampart.wampart.enums.CustomerResponse;
 import com.wampart.wampart.enums.InspectionStatus;
 import com.wampart.wampart.enums.InspectionType;
 import lombok.AllArgsConstructor;
@@ -21,15 +22,24 @@ public class CustomerInspectionResponse {
     private String id;
     private String inspectionReference;
     private String bookingId;
-    private String carId;
+
+
+    private String carNumberPlate;
+    private String carModel;
+    private String carBrand;
+
+
     private InspectionType inspectionType;
     private LocalDateTime dateOfInspection;
+    private InspectionStatus inspectionStatus;
     private CarCondition condition;
+    private CustomerResponse customerResponse;
+    private String customerComment;
     private Boolean isDamaged;
-    private List<String> damagedParts;
+    private Boolean isDamageChargeRequired;
+    private Double damageChargeAmount;
     private List<String> damagedPhotos;
-    private Double damageCost;
-    private String additionalNotes;
+    private String inspectionComment;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -3,6 +3,7 @@ package com.wampart.wampart.controller;
 
 import com.wampart.wampart.dto.request.*;
 import com.wampart.wampart.dto.response.AdminBookingResponse;
+import com.wampart.wampart.dto.response.BookingHistoryResponse;
 import com.wampart.wampart.dto.response.CustomerBookingResponse;
 import com.wampart.wampart.service.BookingService;
 import jakarta.validation.Valid;
@@ -82,5 +83,34 @@ public class BookingController {
     public ResponseEntity<AdminBookingResponse> createBooking(@Valid @RequestBody AdminBookingRequest request ) {
         return ResponseEntity.ok(bookingService.createBookingForCustomer(request));
     }
+
+    //================= Booking history endpoints======================
+
+    @GetMapping("/admin/cars/{carId}/booking-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<BookingHistoryResponse>> getBookingHistoryByCar(@PathVariable String carId ){
+        return ResponseEntity.ok(bookingService.getBookingHistoryByCar(carId));
+    }
+
+    @GetMapping("/admin/customers/{userId}/booking-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<BookingHistoryResponse>> getBookingHistoryByUser(@PathVariable String userId) {
+        return ResponseEntity.ok(bookingService.getBookingHistoryByUser(userId));
+    }
+
+    //users get their booking history
+    @GetMapping("/bookings/my-booking-history")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<BookingHistoryResponse>> getMyBookingHistory() {
+        return ResponseEntity.ok(bookingService.getMyBookingHistory());
+    }
+
+    //swap car
+    @PatchMapping("/admin/bookings/{bookingId}/reassign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'CUSTOMER') ")
+    public ResponseEntity<AdminBookingResponse> reassignBooking (@PathVariable String bookingId, @Valid @RequestBody ReassignBookingRequest request) {
+        return ResponseEntity.ok(bookingService.reassignBooking(bookingId, request));
+    }
+
 
 }

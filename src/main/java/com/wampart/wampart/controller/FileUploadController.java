@@ -84,12 +84,21 @@ public class FileUploadController {
 
     @PutMapping("/users/{userId}/profile-photo")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<UserResponse> updateProfilePhoto(@PathVariable String id, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<UserResponse> updateProfilePhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
         String photoUrl = fileUploadService.uploadFile(file,"warmpart/profiles" );
 
-       UserResponse updatedUser = userService.updateProfilePhoto(id, photoUrl);
+       UserResponse updatedUser = userService.updateProfilePhoto(userId, photoUrl);
 
         return ResponseEntity.ok(updatedUser);
+    }
+
+
+    @PostMapping("/admin/{bookingId}/damage-photos")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<String>> uploadDamagePhotos(@PathVariable String bookingId, @RequestParam("files") List<MultipartFile> files) {
+        List<String> uploadUrls = fileUploadService.uploadMultipleFiles(files, "wampart/damages");
+        return ResponseEntity.ok(uploadUrls);
+
     }
 
 

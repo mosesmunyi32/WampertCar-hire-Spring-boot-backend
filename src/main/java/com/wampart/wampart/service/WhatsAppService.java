@@ -21,7 +21,7 @@ public class WhatsAppService {
         try {
             Message.creator(
                     new PhoneNumber("whatsapp:" + toPhoneNumber),
-                    new PhoneNumber(twilioConfig.getWhatsappNumber()),
+                    new PhoneNumber("whatsapp:" + twilioConfig.getWhatsappNumber()),
                     message
             ).create();
 

@@ -12,8 +12,7 @@ import java.util.Optional;
 @Repository
 public interface InspectionRepository extends MongoRepository<InspectionEntity, String> {
     List<InspectionEntity> findByBookingId(String bookingId);
-    List<InspectionEntity> findByCarId(String carId);
-    Optional<InspectionEntity> findByInspectionReference(String inspectionReference);
+    Optional<InspectionEntity> findByBookingIdAndInspectionType(String bookingId, InspectionType inspectionType);
 
 
 }
