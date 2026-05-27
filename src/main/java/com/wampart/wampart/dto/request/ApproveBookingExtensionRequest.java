@@ -14,12 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ApproveBookingExtensionRequest {
 
-    @NotBlank(message = "Extension ID is required")
     private String extensionId;
 
     @NotNull(message = "Extension status is required")
     private ExtensionStatus extensionStatus;
 
-    @NotNull(message = "Please provide an extension note")
+
     private String adminNote;
 }

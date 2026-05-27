@@ -13,11 +13,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BookingExtensionRequest {
 
+
     @NotBlank(message = "Booking ID is required")
     private String bookingId;
+
 
     @NotNull(message = "Requested days is required")
     private Integer requestedDays;
 
+
     private String customerNote;
 }
+
+
+

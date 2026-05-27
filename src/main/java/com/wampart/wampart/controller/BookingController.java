@@ -80,7 +80,7 @@ public class BookingController {
 
     @PostMapping("/admin/bookings/create-for-customer")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<AdminBookingResponse> createBooking(@Valid @RequestBody AdminBookingRequest request ) {
+    public ResponseEntity<AdminBookingResponse> createBookingForCustomer(@Valid @RequestBody AdminBookingRequest request ) {
         return ResponseEntity.ok(bookingService.createBookingForCustomer(request));
     }
 

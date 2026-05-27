@@ -4,7 +4,9 @@ package com.wampart.wampart.service;
 import com.wampart.wampart.dto.request.CarRequest;
 import com.wampart.wampart.dto.response.AdminCarResponse;
 import com.wampart.wampart.dto.response.CustomerCarResponse;
+import com.wampart.wampart.enums.BookingStatus;
 import com.wampart.wampart.model.CarEntity;
+import com.wampart.wampart.repositoty.BookingRepository;
 import com.wampart.wampart.repositoty.CarRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -23,6 +25,9 @@ import java.util.stream.Collectors;
 public class CarService {
     private final CarRepository carRepository;
     private final FileUploadService fileUploadService;
+    private final BookingRepository bookingRepository;
+
+
 
     public AdminCarResponse addCar(CarRequest request) {
         if(carRepository.existsByNumberPlate(request.getNumberPlate())) {
@@ -130,6 +135,13 @@ public class CarService {
 
 
     public AdminCarResponse mapToAdminCarResponse(CarEntity car) {
+        boolean isInUse = bookingRepository.findByCarId(car.getId())
+                .stream()
+                .anyMatch(booking -> booking.getBookingStatus() == BookingStatus.CONFIRMED &&
+                        !booking.getStartDate().isAfter(LocalDateTime.now()) &&
+                        !booking.getEndDate().isBefore(LocalDateTime.now()));
+
+
         return AdminCarResponse.builder()
                 .id(car.getId())
                 .brand(car.getBrand())
@@ -144,6 +156,7 @@ public class CarService {
                 .images(car.getImages())
                 .pricePerDay(car.getPricePerDay())
                 .isAvailable(car.getIsAvailable())
+                .isInUse(isInUse)
                 .currentMileage(car.getCurrentMileage())
                 .serviceMileageInterval(car.getServiceMileageInterval())
                 .insuranceExpiryDate(car.getInsuranceExpiryDate())
@@ -153,6 +166,12 @@ public class CarService {
     }
 
     public CustomerCarResponse mapToCustomerResponse(CarEntity car) {
+        boolean isInUse = bookingRepository.findByCarId(car.getId())
+                .stream()
+                .anyMatch(booking -> booking.getBookingStatus() == BookingStatus.CONFIRMED &&
+                        !booking.getStartDate().isAfter(LocalDateTime.now()) &&
+                        !booking.getEndDate().isBefore(LocalDateTime.now()));
+
         return CustomerCarResponse.builder()
                 .id(car.getId())
                 .brand(car.getBrand())
@@ -167,6 +186,7 @@ public class CarService {
                 .images(car.getImages())
                 .pricePerDay(car.getPricePerDay())
                 .isAvailable(car.getIsAvailable())
+                .isInUse(isInUse)
                 .createdAt(car.getCreatedAt())
                 .updatedAt(car.getUpdatedAt())
                 .build();

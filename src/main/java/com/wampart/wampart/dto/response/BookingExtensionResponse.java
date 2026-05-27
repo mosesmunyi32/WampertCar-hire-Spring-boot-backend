@@ -22,10 +22,10 @@ public class BookingExtensionResponse {
     private Double extensionCost;
     private ExtensionStatus extensionStatus;
     private LocalDateTime requestedAt;
-    private String approvedBy;
-    private LocalDateTime approvedAt;
     private String adminNote;
     private String customerNote;
+    private String approvedBy;
+    private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

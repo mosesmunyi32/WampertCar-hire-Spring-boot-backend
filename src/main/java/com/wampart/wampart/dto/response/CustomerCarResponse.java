@@ -22,6 +22,7 @@ public class CustomerCarResponse {
     private String brand;
     private String typeOfFuel;
     private String numberPlate;
+    private Boolean isInUse;
     private String transmission;
     private Integer numberOfPassengers;
     private String description;

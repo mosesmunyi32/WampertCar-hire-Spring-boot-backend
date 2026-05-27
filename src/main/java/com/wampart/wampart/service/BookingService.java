@@ -189,6 +189,16 @@ public class BookingService {
 
 
     CustomerBookingResponse mapToCustomerBookingResponse(BookingEntity booking) {
+
+        String approvedByName = null;
+
+        if(booking.getApprovedBy() != null ) {
+
+            approvedByName = userRepository.findById(booking.getApprovedBy())
+                    .map(UserEntity::getFirstName)
+                    .orElse(null);
+        }
+
         return CustomerBookingResponse.builder()
                 .id(booking.getId())
                 .carId(booking.getCarId())
@@ -202,6 +212,7 @@ public class BookingService {
                 .discount(booking.getDiscount())
                 .customerNote(booking.getCustomerNote())
                 .adminNote((booking.getAdminNote()))
+                .approvedByName(approvedByName)
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
                 .build();
@@ -311,6 +322,9 @@ public class BookingService {
 
         if(numberOfDays < 2 ) {
             throw new RuntimeException("cars are available for more than one day");
+        }
+        if(customer.getIsVerified() == false) {
+            throw new RuntimeException("Customer is not verified, verify the customer before booking");
         }
 
         double bookingCost = numberOfDays * car.getPricePerDay();

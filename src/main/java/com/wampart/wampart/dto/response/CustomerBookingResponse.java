@@ -29,6 +29,7 @@ public class CustomerBookingResponse {
     private BookingStatus bookingStatus;
     private String customerNote;
     private String adminNote;
+    private String approvedByName;
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

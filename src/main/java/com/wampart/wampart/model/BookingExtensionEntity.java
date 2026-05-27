@@ -15,22 +15,20 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "booking_extensions")
+@Document(collection = "booking_extension")
 public class BookingExtensionEntity {
     @Id
     private String id;
 
-
-
-    @Indexed(unique = true)
     private String extensionReference;
-
     private String bookingId;
     private String userId;
-    private String extensionCost;
+    private Integer requestedDays;
     private ExtensionStatus extensionStatus;
+    private Double extensionCost;
     private LocalDateTime requestedAt;
     private String approvedBy;
+    private LocalDateTime approvedAt;
     private String adminNote;
     private String customerNote;
     private LocalDateTime createdAt;
