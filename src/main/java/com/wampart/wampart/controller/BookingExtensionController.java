@@ -28,7 +28,7 @@ public class BookingExtensionController {
     }
 
     @GetMapping("/bookings/extensions/my-extensions")
-    @PostMapping("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<List<BookingExtensionResponse>> getMyBookingExtensions() {
         return ResponseEntity.ok(bookingExtensionService.getMyExtensions());
     }
@@ -40,13 +40,14 @@ public class BookingExtensionController {
     }
 
     @GetMapping("/admin/extensions")
+
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<BookingExtensionResponse>> getAllBookingExtensions() {
         return ResponseEntity.ok(bookingExtensionService.getAllExtensions());
     }
 
     @GetMapping("/admin/bookings/{bookingId}/extensions")
-    @PreAuthorize("hasAnyrole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<BookingExtensionResponse>> getExtensionByBookingId(@PathVariable String bookingId) {
         return ResponseEntity.ok(bookingExtensionService.getExtensionsByBookingId(bookingId));
     }

@@ -17,6 +17,7 @@ public interface BookingRepository extends MongoRepository<BookingEntity, String
     List<BookingEntity> findByUserId(String userId);
     List<BookingEntity> findByBookingStatus(BookingStatus bookingStatus);
     List<BookingEntity> findByCarId(String carId);
+    List<BookingEntity> findByBookingStatusAndCreatedAtBefore(BookingStatus bookingStatus, LocalDateTime cutoff);
 
     @Query("""
 {'carId': ?0,'bookingStatus': {$in: ['PENDING', 'CONFIRMED'] }}

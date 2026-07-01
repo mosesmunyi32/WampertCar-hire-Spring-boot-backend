@@ -1,10 +1,7 @@
 package com.wampart.wampart.service;
 
 
-import com.wampart.wampart.dto.request.CreatePostInspectionRequest;
-import com.wampart.wampart.dto.request.CreatePreInspectionRequest;
-import com.wampart.wampart.dto.request.CustomerInspectionRequest;
-import com.wampart.wampart.dto.request.UpdateInspectionRequest;
+import com.wampart.wampart.dto.request.*;
 import com.wampart.wampart.dto.response.AdminInspectionResponse;
 import com.wampart.wampart.dto.response.CustomerInspectionResponse;
 import com.wampart.wampart.enums.BookingStatus;
@@ -35,7 +32,8 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class InspectionService {
+public class
+InspectionService {
     private final InspectionRepository inspectionRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
@@ -151,6 +149,24 @@ public class InspectionService {
 
 
     }
+
+    public AdminInspectionResponse adminConfirmForCustomerInspection(String bookingId) {
+
+        InspectionEntity inspection = inspectionRepository.findByBookingIdAndInspectionType(bookingId, InspectionType.PRE_INSPECTION).orElseThrow(() -> new ResourceNotFoundException("No pre-inspection found on this booking") );
+
+
+        if(inspection.getCustomerResponse() != CustomerResponse.PENDING ) {
+            throw new BadRequestException("This inspection has already been responded to");
+        }
+
+        inspection.setCustomerResponse(CustomerResponse.CONFIRMED);
+        inspection.setCustomerComment("Confirmed by admin on behalf of the customer");
+
+        InspectionEntity updated = inspectionRepository.save(inspection);
+
+        return mapToAdminInspectionResponse(updated);
+
+    };
 
 
 

@@ -8,7 +8,10 @@
       "Bash(git *)",
       "Bash(nslookup *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\admin\\\\Desktop\\\\My Learning Projects\\\\Warmpart Auto\\\\wampart\" -Recurse -Directory)",
-      "PowerShell(head *)"
+      "PowerShell(head *)",
+      "Bash(./mvnw -q clean compile)",
+      "WebFetch(domain:central.sonatype.com)",
+      "Bash(javap -p target/classes/com/wampart/wampart/enums/BookingStatus.class)"
     ]
   }
 }

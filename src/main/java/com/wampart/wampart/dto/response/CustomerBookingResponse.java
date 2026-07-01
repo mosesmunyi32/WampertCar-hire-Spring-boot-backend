@@ -27,6 +27,7 @@ public class CustomerBookingResponse {
     private Double pricePerDay;
     private Double bookingCost;
     private BookingStatus bookingStatus;
+    private LocalDateTime expiresAt;
     private String customerNote;
     private String adminNote;
     private String approvedByName;

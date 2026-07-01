@@ -44,6 +44,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.cancelBooking(id));
     }
 
+    //edit a pending or confirmed booking (owner customer or any admin)
+    @PatchMapping("/bookings/{id}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<CustomerBookingResponse> updateBooking(@PathVariable String id, @Valid @RequestBody UpdateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, request));
+    }
+
     //==========Admin Methods=========================//
     @GetMapping("/admin/bookings")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN' )")
@@ -67,7 +74,7 @@ public class BookingController {
 
 
     @GetMapping("/admin/bookings/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN' )")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<AdminBookingResponse> getBookingByIdForAdmin(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.getBookingByIdForAdmin(id));
     }
@@ -76,6 +83,12 @@ public class BookingController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
     public ResponseEntity<AdminBookingResponse> approveOrRejectBooking(@PathVariable String id, @Valid @RequestBody ApproveBookingRequest request){
         return ResponseEntity.ok(bookingService.approveOrRejectBooking(id,request));
+    }
+
+    @PatchMapping("/admin/bookings/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminBookingResponse> adminCancelBooking(@PathVariable String id, @Valid @RequestBody AdminCancelBookingRequest request) {
+        return ResponseEntity.ok(bookingService.adminCancelBooking(id, request));
     }
 
     @PostMapping("/admin/bookings/create-for-customer")

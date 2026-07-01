@@ -8,6 +8,7 @@ import com.wampart.wampart.dto.response.BookingHistoryResponse;
 import com.wampart.wampart.dto.response.CustomerBookingResponse;
 import com.wampart.wampart.enums.BookingStatus;
 import com.wampart.wampart.enums.InspectionType;
+import com.wampart.wampart.enums.Role;
 import com.wampart.wampart.exception.BadRequestException;
 import com.wampart.wampart.exception.ResourceNotFoundException;
 import com.wampart.wampart.model.BookingEntity;
@@ -20,6 +21,8 @@ import com.wampart.wampart.repositoty.InspectionRepository;
 import com.wampart.wampart.repositoty.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +45,9 @@ public class BookingService {
     private final WhatsAppService whatsAppService;
     private final PdfService pdfService;
     private final InspectionRepository inspectionRepository;
+
+    @Value("${booking.pending-expiry-minutes:10}")
+    private long pendingExpiryMinutes;
 
 
 
@@ -68,6 +74,27 @@ public class BookingService {
     private boolean isCarAvailableForDates(String carId, LocalDateTime startDate, LocalDateTime endDate ) {
         List<BookingEntity> overlappingBookings = bookingRepository.findOverlappingBookings(carId, startDate, endDate);
         return overlappingBookings.isEmpty();
+    }
+
+
+    //========EXPIRY
+
+    @Scheduled(fixedRateString = "${booking.expiry-check-interval-ms:60000}")
+    public void expireStalePnedingBookings() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(pendingExpiryMinutes);
+        List<BookingEntity> staleBookings = bookingRepository.findByBookingStatusAndCreatedAtBefore(BookingStatus.PENDING, cutoff);
+
+        if(staleBookings.isEmpty()) {
+            return;
+        }
+
+        for (BookingEntity booking: staleBookings ) {
+            booking.setBookingStatus(BookingStatus.EXPIRED);
+
+        }
+
+        bookingRepository.saveAll(staleBookings);
+        log.info("Expired {} pending booking(s) older than {} minutes", staleBookings.size(), pendingExpiryMinutes);
     }
 
 
@@ -137,9 +164,6 @@ public class BookingService {
 
 
 
-
-
-
         return mapToCustomerBookingResponse(savedBooking);
 
     }
@@ -186,6 +210,61 @@ public class BookingService {
     }
 
 
+    // Edit a PENDING or CONFIRMED booking. Usable by the owning customer or any admin.
+    public CustomerBookingResponse updateBooking(String id, UpdateBookingRequest request) {
+        UserEntity currentUser = getCurrentUser();
+
+        BookingEntity booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.SUPER_ADMIN;
+        if (!isAdmin && !booking.getUserId().equals(currentUser.getId())) {
+            throw new BadRequestException("You are not authorized to edit this booking");
+        }
+
+        if (booking.getBookingStatus() != BookingStatus.PENDING) {
+            throw new BadRequestException("Only pending bookings can be edited");
+        }
+
+        LocalDateTime newStart = request.getStartDate() != null ? request.getStartDate() : booking.getStartDate();
+        LocalDateTime newEnd = request.getEndDate() != null ? request.getEndDate() : booking.getEndDate();
+
+        boolean datesChanged = !newStart.equals(booking.getStartDate()) || !newEnd.equals(booking.getEndDate());
+
+        if (datesChanged) {
+            if (!newEnd.isAfter(newStart)) {
+                throw new BadRequestException("End date must be after start date");
+            }
+
+            long numberOfDays = ChronoUnit.DAYS.between(newStart, newEnd);
+            if (numberOfDays < 2) {
+                throw new BadRequestException("A booking must be for more than one day");
+            }
+
+            // Re-check availability for the new dates, ignoring this booking itself
+            boolean conflict = bookingRepository
+                    .findOverlappingBookings(booking.getCarId(), newStart, newEnd)
+                    .stream()
+                    .anyMatch(b -> !b.getId().equals(booking.getId()));
+            if (conflict) {
+                throw new BadRequestException("Car is not available for the requested dates");
+            }
+
+            booking.setStartDate(newStart);
+            booking.setEndDate(newEnd);
+            booking.setNumberOfDays((int) numberOfDays);
+            booking.setBookingCost(numberOfDays * booking.getPricePerDay());
+        }
+
+        if (request.getTravelDestination() != null) {
+            booking.setTravelDestination(request.getTravelDestination());
+        }
+
+        BookingEntity updated = bookingRepository.save(booking);
+        return mapToCustomerBookingResponse(updated);
+    }
+
+
 
 
     CustomerBookingResponse mapToCustomerBookingResponse(BookingEntity booking) {
@@ -199,6 +278,11 @@ public class BookingService {
                     .orElse(null);
         }
 
+        LocalDateTime expiresAt = null;
+        if(booking.getBookingStatus() == BookingStatus.PENDING && booking.getCreatedAt() != null ) {
+            expiresAt = booking.getCreatedAt().plusMinutes(pendingExpiryMinutes);
+        }
+
         return CustomerBookingResponse.builder()
                 .id(booking.getId())
                 .carId(booking.getCarId())
@@ -206,6 +290,7 @@ public class BookingService {
                 .endDate(booking.getEndDate())
                 .bookingCost(booking.getBookingCost())
                 .bookingStatus(booking.getBookingStatus())
+                .expiresAt(expiresAt)
                 .travelDestination(booking.getTravelDestination())
                 .numberOfDays(booking.getNumberOfDays())
                 .pricePerDay(booking.getPricePerDay())
@@ -432,6 +517,26 @@ public class BookingService {
 
     }
 
+    public AdminBookingResponse adminCancelBooking(String id, AdminCancelBookingRequest request) {
+        UserEntity admin = getCurrentUser();
+
+        BookingEntity booking = bookingRepository.findById(id).orElseThrow( () -> new ResourceNotFoundException("Booking not found"));
+
+        if(booking.getBookingStatus() !=BookingStatus.PENDING
+                && booking.getBookingStatus() != BookingStatus.CONFIRMED ) {
+            throw new BadRequestException("Only Pending or Confirmed bookings can be canceled");
+        }
+
+        booking.setBookingStatus(BookingStatus.CANCELLED);
+        booking.setApprovedBy(admin.getId());
+
+        if(request.getReason() != null && !request.getReason().isBlank()) {
+            booking.setAdminNote(request.getReason());
+        }
+        BookingEntity updatedBooking = bookingRepository.save(booking);
+        return mapToAdminBookingResponse(updatedBooking);
+    }
+
 
     AdminBookingResponse mapToAdminBookingResponse(BookingEntity booking) {
         return AdminBookingResponse.builder()
@@ -521,6 +626,9 @@ public class BookingService {
         booking.setBookingCost(newBookingCost);
         booking.setAdminNote(request.getAdminNote());
         booking.setUpdatedAt(LocalDateTime.now());
+
+        inspectionRepository.findByBookingIdAndInspectionType(booking.getId(), InspectionType.PRE_INSPECTION)
+                .ifPresent(inspectionRepository::delete);
 
         BookingEntity updatedBooking = bookingRepository.save(booking);
         return mapToAdminBookingResponse(updatedBooking);

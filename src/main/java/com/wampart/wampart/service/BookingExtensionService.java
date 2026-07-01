@@ -51,6 +51,21 @@ public class BookingExtensionService {
 
     }
 
+    // Reject an extension if the extra days collide with another booking for the same car
+    private void ensureCarFreeForExtension(BookingEntity booking, int requestedDays) {
+        LocalDateTime extensionStart = booking.getEndDate();
+        LocalDateTime extensionEnd = booking.getEndDate().plusDays(requestedDays);
+
+        boolean conflict = bookingRepository
+                .findOverlappingBookings(booking.getCarId(), extensionStart, extensionEnd)
+                .stream()
+                .anyMatch(b -> !b.getId().equals(booking.getId()));
+
+        if (conflict) {
+            throw new BadRequestException("This car has been booked in the days you want to extend to");
+        }
+    }
+
     public BookingExtensionResponse requestExtension(BookingExtensionRequest request) {
         UserEntity user = getCurrentUser();
 
@@ -71,6 +86,8 @@ public class BookingExtensionService {
         }
 
         CarEntity car = carRepository.findById(booking.getCarId()).orElseThrow(()-> new RuntimeException("Car not found"));
+
+        ensureCarFreeForExtension(booking, request.getRequestedDays());
 
         double extensionCost = request.getRequestedDays() * car.getPricePerDay();
 
@@ -124,6 +141,8 @@ public class BookingExtensionService {
 
         if(request.getExtensionStatus() == ExtensionStatus.APPROVED) {
             BookingEntity booking = bookingRepository.findById(extension.getBookingId()).orElseThrow(()-> new ResourceNotFoundException("booking not found"));
+
+            ensureCarFreeForExtension(booking, extension.getRequestedDays());
 
             booking.setEndDate(booking.getEndDate().plusDays(extension.getRequestedDays()) );
             booking.setExtendedDays(booking.getExtendedDays() + extension.getRequestedDays());

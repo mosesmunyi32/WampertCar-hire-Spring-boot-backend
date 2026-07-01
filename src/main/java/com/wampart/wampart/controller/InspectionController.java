@@ -1,10 +1,7 @@
 package com.wampart.wampart.controller;
 
 
-import com.wampart.wampart.dto.request.CreatePostInspectionRequest;
-import com.wampart.wampart.dto.request.CreatePreInspectionRequest;
-import com.wampart.wampart.dto.request.CustomerInspectionRequest;
-import com.wampart.wampart.dto.request.UpdateInspectionRequest;
+import com.wampart.wampart.dto.request.*;
 import com.wampart.wampart.dto.response.AdminInspectionResponse;
 import com.wampart.wampart.dto.response.CustomerInspectionResponse;
 import com.wampart.wampart.service.InspectionService;
@@ -32,13 +29,21 @@ public class InspectionController {
 
     //customer confirms pre-inspection
     @PatchMapping("/inspections/{inspectionId}/respond")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER', 'SUPER_ADMIN')")
     public ResponseEntity<CustomerInspectionResponse> confirmPreInspection(
             @PathVariable String inspectionId,
             @Valid @RequestBody CustomerInspectionRequest request
     ) {
         return ResponseEntity.ok(
                 inspectionService.customerRespondToInspection(inspectionId, request)
+        );
+    }
+
+    @PatchMapping("/admin/bookings/{bookingId}/inspection/confirm")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminInspectionResponse> confirmForCustomer(@PathVariable String bookingId) {
+        return ResponseEntity.ok(
+                inspectionService.adminConfirmForCustomerInspection(bookingId)
         );
     }
 
@@ -51,7 +56,7 @@ public class InspectionController {
 
     //admin getting all inspections for a booking
     @GetMapping("/admin/bookings/{bookingId}/inspections")
-    @PreAuthorize(("hasAnyRole('ADMIN', 'SUPER_ADMIN')"))
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<AdminInspectionResponse>> getAllInspectionsForBooking(@PathVariable String bookingId) {
         return ResponseEntity.ok(inspectionService.getInspectionsForBooking(bookingId));
 

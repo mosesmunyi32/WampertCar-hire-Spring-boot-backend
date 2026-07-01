@@ -38,6 +38,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResourceException(DuplicateResourceException ex) {
         ErrorResponse error = ErrorResponse.builder()

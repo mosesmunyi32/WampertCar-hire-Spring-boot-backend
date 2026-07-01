@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: wampart
 
@@ -55,4 +57,6 @@ twilio:
   whatsapp-number: +14155238886
   admin-whatsapp-number: "+25470750362"
 
-
+booking:
+  pending-expiry-minutes: 10
+  expiry-check-interval-ms: 60000
