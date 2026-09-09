@@ -2,10 +2,10 @@ spring:
   config:
     import: optional:file:.env[.properties]
   application:
-    name: wampart
+    name: wampert
 
   mongodb:
-    uri: ${WARMPERT_MONGODB_URI}
+    uri: ${WAMPERT_MONGODB_URI}
 
 
   mail:
@@ -42,7 +42,7 @@ logging:
   level:
     root: INFO
     com:
-      wampart: DEBUG
+      wampert: DEBUG
     org:
       springframework:
         data:

@@ -1,0 +1,207 @@
+package com.wampert.wampert.service;
+
+
+import com.wampert.wampert.config.JwtService;
+import com.wampert.wampert.dto.request.AdminCustomerRegistrationRequest;
+import com.wampert.wampert.dto.request.ChangePasswordRequest;
+import com.wampert.wampert.dto.request.LoginRequest;
+import com.wampert.wampert.dto.request.RegisterRequest;
+import com.wampert.wampert.dto.response.AuthResponse;
+import com.wampert.wampert.dto.response.UserResponse;
+import com.wampert.wampert.enums.Role;
+import com.wampert.wampert.exception.ResourceNotFoundException;
+import com.wampert.wampert.model.UserEntity;
+import com.wampert.wampert.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AuthService {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final WhatsAppService whatsAppService;
+
+
+
+    private UserEntity getCurrentUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return userRepository.findByEmail(email).orElseThrow(()-> new ResourceNotFoundException("User not found"));
+
+    }
+
+    public AuthResponse registerByAdmin(AdminCustomerRegistrationRequest request) {
+        if(userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("email already exist");
+        }
+
+        if(userRepository.existsByIdNumber(request.getIdNumber())) {
+            throw new RuntimeException("customer with that user ID number exists");
+        }
+
+
+        UserEntity userEntity = UserEntity.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .dateOfBirth(request.getDateOfBirth())
+                .gender(request.getGender())
+                .county(request.getCounty())
+                .alternativePhoneNumber(request.getAlternativePhoneNumber())
+                .phoneNumber(request.getPhoneNumber())
+                .city(request.getCity())
+                .idNumber(request.getIdNumber())
+                .driversLicenceNumber(request.getDriversLicenceNumber())
+                .role(Role.CUSTOMER)
+                .isVerified(false)
+                .isActive(true)
+                .build();
+
+        UserEntity savedUser = userRepository.save(userEntity);
+
+        String token = jwtService.generateToken(savedUser);
+
+        return AuthResponse.builder()
+                .token(token)
+                .id(savedUser.getId())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .email(savedUser.getEmail())
+                .isVerified(true)
+                .isActive(true)
+                .build();
+
+
+    }
+
+
+
+
+
+
+
+    public AuthResponse register(RegisterRequest request) {
+
+
+        if(userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("email already exist");
+        }
+
+
+
+        UserEntity userEntity = UserEntity.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .dateOfBirth(request.getDateOfBirth())
+                .gender(request.getGender())
+                .county(request.getCounty())
+                .alternativePhoneNumber(request.getAlternativePhoneNumber())
+                .phoneNumber(request.getPhoneNumber())
+                .city(request.getCity())
+                .idNumber(request.getIdNumber())
+                .driversLicenceNumber(request.getDriversLicenceNumber())
+                .role(Role.CUSTOMER)
+                .isVerified(false)
+                .isActive(true)
+                .build();
+
+        UserEntity savedUser = userRepository.save(userEntity);
+
+        String token = jwtService.generateToken(savedUser);
+
+
+
+        try {
+            whatsAppService.notifyAdminNewUser(
+                    savedUser.getFirstName(),
+                    savedUser.getPhoneNumber(),
+                    savedUser.getEmail(),
+                    savedUser.getLastName()
+            );
+        } catch (Exception e) {
+            log.warn("failed to send whatsapp notification: {}", e.getMessage() );
+        }
+
+
+
+
+
+
+
+
+        return AuthResponse.builder()
+                .token(token)
+                .id(savedUser.getId())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .email(savedUser.getEmail())
+                .isVerified(savedUser.getIsVerified())
+                .isActive(savedUser.getIsActive())
+                .build();
+    }
+
+
+    public AuthResponse handleChangePassword(ChangePasswordRequest request) {
+        UserEntity currentUser = getCurrentUser();
+        if(!passwordEncoder.matches(request.getOldPassword(), currentUser.getPassword())) {
+            throw new RuntimeException("old password is incorrect");
+        }
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        UserEntity updatedUser = userRepository.save(currentUser);
+        return AuthResponse.builder()
+                .token(jwtService.generateToken(updatedUser))
+                .id(updatedUser.getId())
+                .firstName(updatedUser.getFirstName())
+                .lastName(updatedUser.getLastName())
+                .email(updatedUser.getEmail())
+                .isVerified(updatedUser.getIsVerified())
+                .isActive(updatedUser.getIsActive())
+                .build();
+
+
+    }
+
+
+
+
+
+    public AuthResponse login(LoginRequest request) {
+        String identifier = request.getEmail() !=null ? request.getEmail() : request.getIdNumber();
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        identifier,
+                        request.getPassword()
+                )
+        );
+
+        UserEntity user = userRepository.findByEmailOrIdNumber(request.getEmail(), request.getIdNumber())
+                .orElseThrow(() -> new RuntimeException("invalid credentials"));
+
+        String token = jwtService.generateToken(user);
+
+        return AuthResponse.builder()
+                .token(token)
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .isVerified(user.getIsVerified())
+                .isActive(user.getIsActive())
+                .build();
+
+
+
+    }
+}

@@ -1,0 +1,129 @@
+package com.wampert.wampert.controller;
+
+
+import com.wampert.wampert.dto.request.*;
+import com.wampert.wampert.dto.response.AdminBookingResponse;
+import com.wampert.wampert.dto.response.BookingHistoryResponse;
+import com.wampert.wampert.dto.response.CustomerBookingResponse;
+import com.wampert.wampert.service.BookingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1")
+@RequiredArgsConstructor
+public class BookingController {
+    private final BookingService bookingService;
+    //================Customer End Points=====//
+    @PostMapping("/bookings")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<CustomerBookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
+        return ResponseEntity.ok(bookingService.createBooking(request));
+    }
+
+    @GetMapping("/bookings/my-bookings")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<CustomerBookingResponse>> getMyBookings() {
+        return ResponseEntity.ok(bookingService.getMyBookings());
+    }
+
+    @GetMapping("/bookings/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<CustomerBookingResponse> getBookingById(@PathVariable String id) {
+        return ResponseEntity.ok(bookingService.getBookingById(id));
+    }
+
+    @PatchMapping("/bookings/{id}/cancel")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<CustomerBookingResponse> cancelBooking(@PathVariable String id) {
+        return ResponseEntity.ok(bookingService.cancelBooking(id));
+    }
+
+    //edit a pending or confirmed booking (owner customer or any admin)
+    @PatchMapping("/bookings/{id}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<CustomerBookingResponse> updateBooking(@PathVariable String id, @Valid @RequestBody UpdateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, request));
+    }
+
+    //==========Admin Methods=========================//
+    @GetMapping("/admin/bookings")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN' )")
+    public ResponseEntity<List<AdminBookingResponse>> getAllBookings() {
+        return ResponseEntity.ok(bookingService.getAllBookings());
+    }
+
+    @PatchMapping("/admin/bookings/{id}/mileage-start")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminBookingResponse> recordMileageStart(@PathVariable String id, @Valid @RequestBody RecordMileageStartRequest request) {
+        return ResponseEntity.ok( bookingService.recordMileageStartAndSetConfirmed(id, request));
+
+    }
+
+    @PatchMapping("/admin/bookings/{id}/mileage-end")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN' )")
+    public ResponseEntity<AdminBookingResponse> recordMileageEnd(@PathVariable String id, @Valid @RequestBody RecordMileageEndRequest request) {
+        return ResponseEntity.ok(bookingService.recordMileageEndAndSetCompleted(id, request));
+    }
+
+
+
+    @GetMapping("/admin/bookings/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminBookingResponse> getBookingByIdForAdmin(@PathVariable String id) {
+        return ResponseEntity.ok(bookingService.getBookingByIdForAdmin(id));
+    }
+
+    @PatchMapping ("/admin/bookings/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+    public ResponseEntity<AdminBookingResponse> approveOrRejectBooking(@PathVariable String id, @Valid @RequestBody ApproveBookingRequest request){
+        return ResponseEntity.ok(bookingService.approveOrRejectBooking(id,request));
+    }
+
+    @PatchMapping("/admin/bookings/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminBookingResponse> adminCancelBooking(@PathVariable String id, @Valid @RequestBody AdminCancelBookingRequest request) {
+        return ResponseEntity.ok(bookingService.adminCancelBooking(id, request));
+    }
+
+    @PostMapping("/admin/bookings/create-for-customer")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<AdminBookingResponse> createBookingForCustomer(@Valid @RequestBody AdminBookingRequest request ) {
+        return ResponseEntity.ok(bookingService.createBookingForCustomer(request));
+    }
+
+    //================= Booking history endpoints======================
+
+    @GetMapping("/admin/cars/{carId}/booking-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<BookingHistoryResponse>> getBookingHistoryByCar(@PathVariable String carId ){
+        return ResponseEntity.ok(bookingService.getBookingHistoryByCar(carId));
+    }
+
+    @GetMapping("/admin/customers/{userId}/booking-history")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<List<BookingHistoryResponse>> getBookingHistoryByUser(@PathVariable String userId) {
+        return ResponseEntity.ok(bookingService.getBookingHistoryByUser(userId));
+    }
+
+    //users get their booking history
+    @GetMapping("/bookings/my-booking-history")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<BookingHistoryResponse>> getMyBookingHistory() {
+        return ResponseEntity.ok(bookingService.getMyBookingHistory());
+    }
+
+    //swap car
+    @PatchMapping("/admin/bookings/{bookingId}/reassign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'CUSTOMER') ")
+    public ResponseEntity<AdminBookingResponse> reassignBooking (@PathVariable String bookingId, @Valid @RequestBody ReassignBookingRequest request) {
+        return ResponseEntity.ok(bookingService.reassignBooking(bookingId, request));
+    }
+
+
+}
