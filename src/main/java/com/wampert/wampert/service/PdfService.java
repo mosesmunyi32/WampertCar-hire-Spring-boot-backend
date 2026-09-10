@@ -1,7 +1,5 @@
 package com.wampert.wampert.service;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import com.lowagie.text.*;
 import com.lowagie.text.Font;
 import com.lowagie.text.pdf.*;
@@ -11,22 +9,32 @@ import com.wampert.wampert.model.UserEntity;
 import com.wampert.wampert.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PdfService {
 
-    private final Cloudinary cloudinary;
     private final BookingRepository bookingRepository;
 
-    // Generate booking receipt PDF and upload to Cloudinary
+    @Value("${file.upload.dir:/var/www/sites/wampertcar/uploads}")
+    private String uploadDir;
+
+    @Value("${file.base.url:https://api.warmpertcar.site/uploads}")
+    private String baseUrl;
+
+    // Generate booking receipt PDF and save locally
     public String generateAndStoreBookingReceipt(
             BookingEntity booking,
             UserEntity customer,
@@ -36,26 +44,20 @@ public class PdfService {
             // Step 1 - Generate PDF bytes
             byte[] pdfBytes = generateBookingReceipt(booking, customer, car);
 
-            // Step 2 - Upload to Cloudinary as "authenticated" so only signed URLs work
-            String publicId = "wampert/receipts/receipt-"
-                    + booking.getBookingReference() + ".pdf";
+            // Step 2 - Save to local storage
+            String folderPath = uploadDir + "/receipts";
+            File folderDir = new File(folderPath);
+            if (!folderDir.exists()) {
+                folderDir.mkdirs();
+            }
 
-            cloudinary.uploader().upload(
-                    pdfBytes,
-                    ObjectUtils.asMap(
-                            "resource_type", "raw",
-                            "public_id", publicId,
-                            "type", "authenticated",
-                            "overwrite", true
-                    )
-            );
+            // Generate unique filename
+            String filename = "receipt-" + booking.getBookingReference() + "-" + UUID.randomUUID() + ".pdf";
+            Path filePath = Paths.get(folderPath, filename);
+            Files.write(filePath, pdfBytes);
 
-            // Step 3 - Generate a permanent signed URL (signature embedded in link)
-            String receiptUrl = cloudinary.url()
-                    .resourceType("raw")
-                    .type("authenticated")
-                    .signed(true)
-                    .generate(publicId);
+            // Step 3 - Generate URL
+            String receiptUrl = baseUrl + "/receipts/" + filename;
 
             // Step 4 - Save URL to booking
             booking.setReceiptUrl(receiptUrl);

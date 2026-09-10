@@ -28,7 +28,7 @@ public class FileUploadController {
     @PostMapping("/admin/cars/{carId}/images")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<AdminCarResponse> postCarImages(@PathVariable String carId, @RequestParam("files") List<MultipartFile> files ) {
-        List<String> imageUrls = new ArrayList<>( fileUploadService.uploadMultipleFiles(files, "wampert/cars"));
+        List<String> imageUrls = new ArrayList<>( fileUploadService.uploadMultipleFiles(files, "cars"));
 
         return ResponseEntity.ok(carService.addCarImages(carId, imageUrls));
 
@@ -39,12 +39,11 @@ public class FileUploadController {
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<AdminCarResponse> uploadCarImage(@PathVariable String carId, @RequestParam("files") List<MultipartFile> files) {
 
-        //upload to cloudinary
-       List<String> imageUrls = new ArrayList<>( fileUploadService.uploadMultipleFiles(files, "wampert/cars"));
+        // Upload to local storage
+       List<String> imageUrls = new ArrayList<>( fileUploadService.uploadMultipleFiles(files, "cars"));
 
-       //save the URLs to car
+       // Save the URLs to car
        return ResponseEntity.ok( carService.addCarImages(carId, imageUrls));
-//        return ResponseEntity.ok(carService.updateCarImages(carId, imageUrls));
 
     }
 
@@ -62,7 +61,7 @@ public class FileUploadController {
     @PostMapping("/users/{userId}/profile-photo")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN' )")
     public ResponseEntity<String> uploadProfilePhoto (@PathVariable String userId, @RequestParam("file") MultipartFile file) {
-        String photoUrl = fileUploadService.uploadFile(file, "wampert/profiles");
+        String photoUrl = fileUploadService.uploadFile(file, "profiles");
 
         userService.uploadProfilePhoto(userId, photoUrl);
         return ResponseEntity.ok("Profile photo uploaded successfully");
@@ -72,12 +71,11 @@ public class FileUploadController {
     @PostMapping("/users/{userId}/id-photos")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<UserResponse> uploadIdPhoto(@PathVariable String userId, @RequestParam("frontPhoto") MultipartFile frontPhoto, @RequestParam("backPhoto") MultipartFile backPhoto ) {
-        String frontPhotoUrl = fileUploadService.uploadFile(frontPhoto, "wampert/ids");
-        String backPhotoUrl = fileUploadService.uploadFile(backPhoto, "wampert/ids");
+        String frontPhotoUrl = fileUploadService.uploadFile(frontPhoto, "ids");
+        String backPhotoUrl = fileUploadService.uploadFile(backPhoto, "ids");
 
         UserResponse savedUser = userService.updateIdPhotos(userId, frontPhotoUrl, backPhotoUrl);
         return ResponseEntity.ok(savedUser);
-
 
     }
 
@@ -85,7 +83,7 @@ public class FileUploadController {
     @PutMapping("/users/{userId}/profile-photo")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<UserResponse> updateProfilePhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
-        String photoUrl = fileUploadService.uploadFile(file,"warmpart/profiles" );
+        String photoUrl = fileUploadService.uploadFile(file, "profiles");
 
        UserResponse updatedUser = userService.updateProfilePhoto(userId, photoUrl);
 
@@ -96,11 +94,9 @@ public class FileUploadController {
     @PostMapping("/admin/{bookingId}/damage-photos")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<List<String>> uploadDamagePhotos(@PathVariable String bookingId, @RequestParam("files") List<MultipartFile> files) {
-        List<String> uploadUrls = fileUploadService.uploadMultipleFiles(files, "wampert/damages");
+        List<String> uploadUrls = fileUploadService.uploadMultipleFiles(files, "damages");
         return ResponseEntity.ok(uploadUrls);
 
     }
-
-
 
 }

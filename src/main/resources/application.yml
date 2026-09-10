@@ -60,3 +60,9 @@ twilio:
 booking:
   pending-expiry-minutes: 10
   expiry-check-interval-ms: 60000
+
+file:
+  upload:
+    dir: /var/www/sites/wampertcar/uploads
+  base:
+    url: https://api.warmpertcar.site/uploads
