@@ -18,9 +18,11 @@ public class CorsConfig {
             CorsConfiguration configuration = new CorsConfiguration();
 
             configuration.setAllowedOriginPatterns(List.of(
-                    "http://localhost:3000",
-                    "https://warmper-car-hire-front-end.vercel.app",
-                    "https://*.vercel.app"
+                "http://localhost:3000",
+                "https://warmpertcar.site",
+                "https://www.warmpertcar.site",
+                "https://warmper-car-hire-front-end.vercel.app",
+                "https://*.vercel.app"
             ));
 
             configuration.setAllowedMethods(List.of(
